@@ -41,6 +41,12 @@ class MiddlewareListener extends AbstractListenerAggregate
             array($this, 'onDispatch'),
             100
         );
+
+        // Attach middlewares to the route before controllers
+        $this->listeners[] = $eventManager->attach(
+            MvcEvent::EVENT_ROUTE,
+            array($this, 'onRoute'),
+            -1);
     }
 
     /**
@@ -59,6 +65,49 @@ class MiddlewareListener extends AbstractListenerAggregate
 
         $global = $config[self::CONFIG][self::CONFIG_GLOBAL];
         $local  = isset($config[self::CONFIG][self::CONFIG_LOCAL][$controllerClass]) ? $config[self::CONFIG][self::CONFIG_LOCAL][$controllerClass] : array();
+        $middlewareNames = array_merge($global, $local);
+
+        return $service->run($middlewareNames);
+    }
+
+    /**
+     * Listen to the "route" event and run related middlewares.
+     *
+     * @param  MvcEvent $event
+     * @return null
+     */
+    public function onRoute(MvcEvent $event)
+    {
+        $matches = $event->getRouteMatch();
+        if (!$matches instanceof \Zend\Mvc\Router\RouteMatch) {
+            // Can't do anything without a route match
+            return;
+        }
+
+        $routeMiddlewares = $matches->getParam('middlewares', false);
+        if (!$routeMiddlewares) {
+            return;
+        }
+        $method = $event->getRequest()->getMethod();
+        $local = null;
+        foreach ($routeMiddlewares as $routeMethod => $methodMiddlewares) {
+
+            // Multiple methods are supported in keys: 'GET,POST'
+            $routeMethod = explode(',', $routeMethod);
+            if (is_array($routeMethod) && in_array($method, $routeMethod, true)) {
+                $local = $methodMiddlewares;
+                break;
+            }
+        }
+        if (null === $local) {
+            return;
+        }
+        $sm = $event->getApplication()->getServiceManager();
+        /** @var \Middleware\Service\MiddlewareRunnerService $service */
+        $service = $sm->get('MiddlewareRunnerService');
+        $config  = $sm->get('Config');
+
+        $global = $config[self::CONFIG][self::CONFIG_GLOBAL];
         $middlewareNames = array_merge($global, $local);
 
         return $service->run($middlewareNames);

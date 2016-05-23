@@ -143,13 +143,21 @@ class MiddlewareListenerTest extends \PHPUnit_Framework_TestCase
     {
         $listener = $this->givenListener();
         $eventManager = $this->givenEventManagerStub();
-        $eventManager->expects($this->once())
+        $eventManager->expects($this->at(0))
             ->method('attach')
             ->with(
                 MvcEvent::EVENT_DISPATCH,
                 array($listener, 'onDispatch'),
                 100
             );
+        $eventManager->expects($this->at(1))
+            ->method('attach')
+            ->with(
+                MvcEvent::EVENT_ROUTE,
+                array($listener, 'onRoute'),
+                -1
+            )
+        ;
 
         $listener->attach($eventManager);
     }
