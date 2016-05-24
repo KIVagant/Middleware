@@ -138,4 +138,20 @@ class MiddlewareRunnerService
             return call_user_func($middleware, $service->request, $service->response, $service->getNextCallable());
         };
     }
+
+    /**
+     * @return array
+     */
+    public function getMiddlewareNames()
+    {
+        return $this->middlewareNames;
+    }
+
+    /**
+     * @param array $middlewareNames
+     */
+    public function setMiddlewareNames($middlewareNames)
+    {
+        $this->middlewareNames = $middlewareNames;
+    }
 }
