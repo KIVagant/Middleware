@@ -21,7 +21,11 @@ return array(
         ),
     ),
     'middlewares' => array(
-        'global' => array(),
-        'local' => array(),
+        'global' => array(
+            'before' => array(),
+            'after' => array(),
+        ),
+        'local' => array(
+        ),
     ),
 );

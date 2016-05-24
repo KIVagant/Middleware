@@ -23,6 +23,8 @@ class MiddlewareListener extends AbstractListenerAggregate
     const CONFIG        = 'middlewares';
     const CONFIG_GLOBAL = 'global';
     const CONFIG_LOCAL  = 'local';
+    const CONFIG_BEFORE = 'before';
+    const CONFIG_AFTER  = 'after';
 
     /**
      * @var array
@@ -63,9 +65,8 @@ class MiddlewareListener extends AbstractListenerAggregate
         $config  = $sm->get('Config');
         $controllerClass = $event->getRouteMatch()->getParam('controller').'Controller';
 
-        $global = $config[self::CONFIG][self::CONFIG_GLOBAL];
         $local  = isset($config[self::CONFIG][self::CONFIG_LOCAL][$controllerClass]) ? $config[self::CONFIG][self::CONFIG_LOCAL][$controllerClass] : array();
-        $middlewareNames = array_merge($global, $local);
+        $middlewareNames = $this->mergeConfigs($config, $local);
 
         return $service->run($middlewareNames);
     }
@@ -107,9 +108,34 @@ class MiddlewareListener extends AbstractListenerAggregate
         $service = $sm->get('MiddlewareRunnerService');
         $config  = $sm->get('Config');
 
-        $global = $config[self::CONFIG][self::CONFIG_GLOBAL];
-        $middlewareNames = array_merge($global, $local);
+        $middlewareNames = $this->mergeConfigs($config, $local);
 
         return $service->run($middlewareNames);
+    }
+
+    /**
+     * @param $config
+     * @param $local
+     * @return array
+     */
+    protected function mergeConfigs($config, $local)
+    {
+        $global = $config[self::CONFIG][self::CONFIG_GLOBAL];
+        if (array_key_exists(self::CONFIG_BEFORE, $global)) {
+            $local = array_merge($global[self::CONFIG_BEFORE], $local);
+        }
+        if (array_key_exists(self::CONFIG_AFTER, $global)) {
+            $local = array_merge($local, $global[self::CONFIG_AFTER]);
+
+            return $local; // skip next BC-condition
+        }
+        if ( // backward compatibility
+            !empty($global)
+            && !array_key_exists(self::CONFIG_BEFORE, $global)
+            && !array_key_exists(self::CONFIG_AFTER, $global)) {
+            $local = array_merge($global, $local);
+        }
+
+        return $local;
     }
 }
