@@ -23,6 +23,7 @@ class MiddlewareListener extends AbstractListenerAggregate
     const CONFIG        = 'middlewares';
     const CONFIG_GLOBAL = 'global';
     const CONFIG_LOCAL  = 'local';
+    const CONFIG_ROUTES  = 'routes';
     const CONFIG_BEFORE = 'before';
     const CONFIG_AFTER  = 'after';
 
@@ -64,9 +65,8 @@ class MiddlewareListener extends AbstractListenerAggregate
         $service = $sm->get('MiddlewareRunnerService');
         $config  = $sm->get('Config');
         $controllerClass = $event->getRouteMatch()->getParam('controller').'Controller';
-
         $local  = isset($config[self::CONFIG][self::CONFIG_LOCAL][$controllerClass]) ? $config[self::CONFIG][self::CONFIG_LOCAL][$controllerClass] : array();
-        $middlewareNames = $this->mergeConfigs($config, $local);
+        $middlewareNames = $this->mergeConfigs($config[self::CONFIG][self::CONFIG_GLOBAL], $local);
 
         return $service->run($middlewareNames);
     }
@@ -108,19 +108,18 @@ class MiddlewareListener extends AbstractListenerAggregate
         $service = $sm->get('MiddlewareRunnerService');
         $config  = $sm->get('Config');
 
-        $middlewareNames = $this->mergeConfigs($config, $local);
+        $middlewareNames = $this->mergeConfigs($config[self::CONFIG][self::CONFIG_ROUTES], $local);
 
         return $service->run($middlewareNames);
     }
 
     /**
-     * @param $config
+     * @param $global
      * @param $local
      * @return array
      */
-    protected function mergeConfigs($config, $local)
+    protected function mergeConfigs($global, $local)
     {
-        $global = $config[self::CONFIG][self::CONFIG_GLOBAL];
         if (array_key_exists(self::CONFIG_BEFORE, $global)) {
             $local = array_merge($global[self::CONFIG_BEFORE], $local);
         }
