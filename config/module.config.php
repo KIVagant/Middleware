@@ -14,10 +14,15 @@
 
 namespace Middleware;
 
+use Middleware\Service\MiddlewareRunnerServiceInterface;
+
 return array(
     'service_manager' => array(
         'factories' => array(
             'MiddlewareRunnerService' => __NAMESPACE__.'\Service\Factory\MiddlewareRunnerServiceFactory',
+        ),
+        'aliases' => array(
+            MiddlewareRunnerServiceInterface::class => 'MiddlewareRunnerService',
         ),
     ),
     'middlewares' => array(

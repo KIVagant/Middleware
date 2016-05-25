@@ -18,7 +18,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\RequestInterface;
 use Zend\Stdlib\ResponseInterface;
 
-class MiddlewareRunnerService
+class MiddlewareRunnerService implements MiddlewareRunnerServiceInterface
 {
     /**
      * @var RequestInterface
